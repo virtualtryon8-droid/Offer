@@ -1,0 +1,414 @@
+
+
+Here is the refined app. I have removed the descriptive text as requested, leaving only the essentials (Link & Coupon), and upgraded the celebration engine into a **continuous, full-screen fireworks blast** that keeps running while the offer is displayed.
+
+```html
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Special Offer</title>
+    <style>
+        /* --- RESET & BASIC SETUP --- */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        body {
+            width: 100vw;
+            height: 100vh;
+            overflow: hidden;
+            background: radial-gradient(circle at center, #1a2a6c, #b21f1f, #fdbb2d); /* Vibrant Background */
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            color: white;
+            position: relative;
+        }
+
+        /* --- MAIN CARD CONTAINER --- */
+        .container {
+            text-align: center;
+            z-index: 10;
+            width: 90%;
+            max-width: 500px;
+            padding: 2.5rem;
+            background: rgba(255, 255, 255, 0.15);
+            backdrop-filter: blur(12px);
+            border-radius: 25px;
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            box-shadow: 0 15px 35px rgba(0,0,0,0.4);
+        }
+
+        h1 {
+            font-size: clamp(2.2rem, 6vw, 3.5rem);
+            font-weight: 900;
+            margin-bottom: 3.5rem;
+            line-height: 1.1;
+            text-shadow: 0 4px 10px rgba(0,0,0,0.5);
+        }
+
+        /* --- BUTTONS --- */
+        .button-wrapper {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 2rem;
+            position: relative;
+            min-height: 160px;
+        }
+
+        /* THE BIG YES BUTTON */
+        .btn-yes {
+            background: linear-gradient(135deg, #00c853, #00e676);
+            color: #003300;
+            font-size: clamp(1.8rem, 5vw, 3rem);
+            font-weight: 900;
+            padding: 1.8rem 4rem;
+            border: none;
+            border-radius: 60px;
+            cursor: pointer;
+            box-shadow: 0 15px 25px rgba(0,0,0,0.4);
+            transition: transform 0.1s, box-shadow 0.1s;
+            text-transform: uppercase;
+            position: relative;
+            z-index: 20;
+            width: 100%; /* Mobile full width */
+        }
+
+        .btn-yes:active {
+            transform: scale(0.92);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+        }
+
+        /* THE ELUSIVE NO BUTTON */
+        .btn-no {
+            background: #ffffff;
+            color: #333;
+            font-size: 1.1rem;
+            font-weight: 800;
+            padding: 1rem 2rem;
+            border-radius: 12px;
+            cursor: pointer;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+            position: relative;
+            transition: transform 0.1s, top 0.1s, left 0.1s;
+            white-space: nowrap;
+            z-index: 5;
+        }
+
+        /* --- FULL SCREEN BLAST OVERLAY --- */
+        .overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.6); /* Slight darkening so text pops */
+            backdrop-filter: blur(2px);
+            z-index: 100;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.5s ease;
+        }
+
+        .overlay.active {
+            opacity: 1;
+            pointer-events: auto;
+        }
+
+        /* Centered Content over the blast */
+        .offer-content {
+            text-align: center;
+            z-index: 102;
+            transform: scale(0.5);
+            transition: transform 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            background: rgba(255, 255, 255, 0.2); /* Highly transparent to see blast */
+            padding: 3rem;
+            border-radius: 30px;
+            border: 2px solid rgba(255, 255, 255, 0.5);
+            backdrop-filter: blur(5px);
+            box-shadow: 0 0 30px rgba(255, 255, 255, 0.2);
+        }
+
+        .overlay.active .offer-content {
+            transform: scale(1);
+        }
+
+        h2 {
+            font-size: 3rem;
+            color: #fff;
+            text-shadow: 0 0 10px rgba(255,215,0, 0.8);
+            margin-bottom: 1rem;
+            animation: pulse 1.5s infinite;
+        }
+
+        .link {
+            display: block;
+            font-size: 1.5rem;
+            color: #fff;
+            font-weight: bold;
+            text-decoration: none;
+            margin-bottom: 2rem;
+            text-shadow: 0 2px 4px rgba(0,0,0,0.8);
+            word-break: break-all;
+        }
+
+        .coupon-box {
+            background: #fff;
+            color: #d32f2f;
+            padding: 1rem 2rem;
+            border-radius: 10px;
+            display: inline-block;
+            box-shadow: 0 10px 20px rgba(0,0,0,0.3);
+            transform: rotate(-3deg);
+        }
+
+        .code {
+            font-family: 'Impact', sans-serif;
+            font-size: 3.5rem;
+            letter-spacing: 3px;
+            display: block;
+            line-height: 1;
+        }
+
+        .label {
+            font-size: 1rem;
+            font-weight: bold;
+            text-transform: uppercase;
+        }
+
+        .close-btn {
+            margin-top: 2rem;
+            background: rgba(0,0,0,0.5);
+            color: white;
+            border: 1px solid white;
+            padding: 10px 30px;
+            border-radius: 50px;
+            cursor: pointer;
+            font-size: 1rem;
+            transition: background 0.3s;
+        }
+        .close-btn:hover { background: white; color: black; }
+
+        /* --- CANVAS --- */
+        #blast-canvas {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 101;
+            pointer-events: none;
+        }
+
+        @keyframes pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+            100% { transform: scale(1); }
+        }
+
+        @media (max-width: 600px) {
+            .btn-yes { font-size: 2rem; }
+            .button-wrapper { flex-direction: column; }
+            h2 { font-size: 2rem; }
+            .code { font-size: 2.5rem; }
+            .link { font-size: 1.1rem; }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Main Screen -->
+    <div class="container">
+        <h1>Do You Need<br>Special Offer?</h1>
+        
+        <div class="button-wrapper">
+            <button class="btn-yes" id="yesBtn">YES</button>
+            <button class="btn-no" id="noBtn">No</button>
+        </div>
+    </div>
+
+    <!-- Full Screen Blast Overlay -->
+    <div class="overlay" id="overlay">
+        <canvas id="blast-canvas"></canvas>
+        <div class="offer-content">
+            <h2>SPECIAL DISCOUNT!</h2>
+            
+            <a href="https://www.subhamgrand.in" target="_blank" class="link">www.subhamgrand.in</a>
+
+            <div class="coupon-box">
+                <span class="label">Coupon Code</span>
+                <span class="code">INSTA10</span>
+            </div>
+
+            <button class="close-btn" onclick="resetApp()">Close Offer</button>
+        </div>
+    </div>
+
+    <script>
+        const yesBtn = document.getElementById('yesBtn');
+        const noBtn = document.getElementById('noBtn');
+        const overlay = document.getElementById('overlay');
+        const canvas = document.getElementById('blast-canvas');
+        const ctx = canvas.getContext('2d');
+
+        // --- ESCAPING NO BUTTON LOGIC ---
+        function moveButton() {
+            const w = window.innerWidth;
+            const h = window.innerHeight;
+            const btnW = noBtn.offsetWidth;
+            const btnH = noBtn.offsetHeight;
+
+            // Ensure it stays on screen
+            const newX = Math.random() * (w - btnW - 40) + 20;
+            const newY = Math.random() * (h - btnH - 40) + 20;
+
+            noBtn.style.position = 'fixed';
+            noBtn.style.left = `${newX}px`;
+            noBtn.style.top = `${newY}px`;
+        }
+
+        // Desktop Mouse Forcefield
+        document.addEventListener('mousemove', (e) => {
+            if (window.innerWidth < 768) return;
+            const rect = noBtn.getBoundingClientRect();
+            const dist = Math.hypot(e.clientX - (rect.left + rect.width/2), e.clientY - (rect.top + rect.height/2));
+            if (dist < 120) moveButton();
+        });
+
+        // Mobile Touch Escape
+        noBtn.addEventListener('touchstart', (e) => {
+            e.preventDefault();
+            moveButton();
+        });
+        noBtn.addEventListener('click', (e) => e.preventDefault());
+
+        // --- CELEBRATION LOGIC ---
+        yesBtn.addEventListener('click', () => {
+            overlay.classList.add('active');
+            startFullPageBlast();
+        });
+
+        function resetApp() {
+            overlay.classList.remove('active');
+            blastActive = false;
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            // Reset button
+            noBtn.style.position = 'relative';
+            noBtn.style.left = 'auto';
+            noBtn.style.top = 'auto';
+        }
+
+        // --- CONTINUOUS FIREWORKS ENGINE ---
+        let particles = [];
+        let blastActive = false;
+
+        function resize() {
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+        }
+        window.addEventListener('resize', resize);
+        resize();
+
+        class Particle {
+            constructor(x, y, color) {
+                this.x = x;
+                this.y = y;
+                this.color = color;
+                this.size = Math.random() * 4 + 2; // Sparkle size
+                const angle = Math.random() * Math.PI * 2;
+                const speed = Math.random() * 8 + 2;
+                this.vx = Math.cos(angle) * speed;
+                this.vy = Math.sin(angle) * speed;
+                this.life = 100;
+                this.decay = Math.random() * 1.5 + 1;
+                this.gravity = 0.15;
+            }
+
+            update() {
+                this.vx *= 0.96; // friction
+                this.vy *= 0.96;
+                this.vy += this.gravity;
+                this.x += this.vx;
+                this.y += this.vy;
+                this.life -= this.decay;
+                this.size *= 0.97;
+            }
+
+            draw() {
+                ctx.globalAlpha = this.life / 100;
+                ctx.fillStyle = this.color;
+                ctx.beginPath();
+                ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
+                ctx.fill();
+                ctx.globalAlpha = 1;
+            }
+        }
+
+        function startFullPageBlast() {
+            particles = [];
+            blastActive = true;
+            animateBlast();
+            
+            // Trigger random explosions continuously
+            setInterval(() => {
+                if(!blastActive) return;
+                const x = Math.random() * canvas.width;
+                const y = Math.random() * canvas.height * 0.8; // Slightly lower bias
+                createExplosion(x, y);
+            }, 400); // New explosion every 400ms
+
+            // Initial big explosion
+            createExplosion(canvas.width/2, canvas.height/2, 150);
+        }
+
+        function createExplosion(x, y, count = 50) {
+            const colors = ['#ff0055', '#00e676', '#ffff00', '#00ccff', '#ff9900', '#ffffff'];
+            const color = colors[Math.floor(Math.random() * colors.length)];
+            
+            for(let i=0; i<count; i++) {
+                particles.push(new Particle(x, y, color));
+            }
+
+            // Add flowers/stars occasionally
+            if (Math.random() > 0.7) {
+                ctx.save();
+                ctx.font = `${Math.random()*30 + 20}px Arial`;
+                ctx.fillText(['🌸','⭐','🌟'][Math.floor(Math.random()*3)], x, y);
+                ctx.restore();
+            }
+        }
+
+        function animateBlast() {
+            if(!blastActive) return;
+
+            // Use trail effect
+            ctx.globalCompositeOperation = 'destination-out';
+            ctx.fillStyle = 'rgba(0, 0, 0, 0.1)';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            ctx.globalCompositeOperation = 'lighter';
+
+            for (let i = particles.length - 1; i >= 0; i--) {
+                const p = particles[i];
+                p.update();
+                p.draw();
+                if (p.life <= 0) particles.splice(i, 1);
+            }
+
+            requestAnimationFrame(animateBlast);
+        }
+    </script>
+</body>
+</html>
+```
